@@ -141,12 +141,89 @@ docker-compose down         # Stop all services
 4. **Database reset** - Run `yarn seed` if data gets messy
 5. **Environment variables** - Don't commit real API keys to git
 
+## Git Workflow
+
+### Working with GitHub
+Your local repository is connected to: https://github.com/JohnWatkinson/fashion-starter
+
+```bash
+# Check status
+git status
+
+# Commit changes
+git add .
+git commit -m "Your commit message"
+
+# Push to GitHub
+git push origin master
+
+# Pull latest changes
+git pull origin master
+```
+
+### Important Notes
+- **Environment files** (`.env`, `.env.local`) are gitignored for security
+- **Docker ports** are configured to avoid conflicts (5434, 6380, 7700, 9090)
+- **Database is automatically seeded** with sample products on first run
+- **MeiliSearch** powers the search functionality
+
+### Current Working Setup
+✅ **Services running on:**
+- Storefront: http://localhost:8000
+- Admin: http://localhost:9000/app (admin@test.com / password123)
+- PostgreSQL: localhost:5434
+- Redis: localhost:6380
+- MeiliSearch: http://localhost:7700
+- MinIO: http://localhost:9090
+
+## Production Deployment
+
+### Option 1: Manual VPS Deployment
+```bash
+# On your VPS
+cd /var/www
+git clone https://github.com/JohnWatkinson/fashion-starter.git
+cd fashion-starter
+./deploy.sh  # Run deployment script
+```
+
+### Option 2: Docker Production
+Use docker-compose.prod.yml for production deployment with:
+- Production database (not Docker)
+- SSL certificates
+- Reverse proxy (Nginx)
+- Environment-specific configs
+
 ## Next Steps for Production
 - [ ] Set up real Stripe keys
 - [ ] Configure Resend for emails
 - [ ] Add SSL certificate
 - [ ] Set up production database
 - [ ] Configure domain/hosting
+- [ ] Set up monitoring (PM2, logs)
+
+## Troubleshooting
+
+### Common Issues
+1. **Port conflicts**: Make sure no other services use ports 5434, 6380, 7700, 9090
+2. **Environment variables**: Check `.env.local` has correct publishable key
+3. **Docker not starting**: Run `docker compose ps` to check service status
+4. **Database empty**: Run `yarn seed` in medusa/ directory
+
+### Reset Everything
+```bash
+# Stop services
+docker compose down
+
+# Reset database
+docker exec medusa-postgres-1 psql -U medusa -d medusa -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+
+# Restart and reseed
+docker compose up -d
+yarn medusa db:migrate
+yarn seed
+yarn medusa user -e "admin@test.com" -p "password123"
+```
 
 ---
 *This is a development guide. See main README.md for full project info.*
